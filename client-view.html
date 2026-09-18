@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Client Portal</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/core.css">
+  <link rel="stylesheet" href="css/modules.css">
+  <link rel="stylesheet" href="css/portal.css">
+</head>
+<body>
+<div id="app" class="ap-app ap-app--workspace ap-app--client">
+  <aside id="global-rail" class="ap-global-rail" aria-label="Global navigation">
+    <button class="ap-rail-brand" data-global-view="home" aria-label="Home">CO</button>
+    <nav class="ap-rail-nav">
+      <button class="ap-rail-item ap-rail-item--active" data-global-view="home"><span class="ap-rail-icon">⌂</span><span>Home</span></button>
+      <button class="ap-rail-item" data-global-view="inbox"><span class="ap-rail-icon">▣</span><span>Inbox</span></button>
+      <button class="ap-rail-item" data-global-view="tasks"><span class="ap-rail-icon">☷</span><span>Tasks</span></button>
+      <button class="ap-rail-item" data-global-view="invoices"><span class="ap-rail-icon">▤</span><span>Invoices</span></button>
+    </nav>
+  </aside>
+  <div class="ap-workspace-shell">
+    <header id="workspace-header" class="ap-header">
+      <button id="sidebar-toggle" class="ap-icon-button ap-mobile-menu" aria-label="Open navigation">☰</button>
+      <div class="ap-header-spacer"></div>
+      <div id="global-search" class="ap-search"><span class="ap-search__icon">⌕</span><input type="search" placeholder="Search shared work…" aria-label="Search shared work"><div id="global-search-results"></div></div>
+      <div id="user-menu" class="ap-user-menu"></div>
+    </header>
+    <div class="ap-body">
+      <aside id="workspace-sidebar" class="ap-sidebar">
+        <div id="agency-identity" class="ap-agency-identity"></div>
+        <nav class="ap-workspace-nav">
+          <button class="ap-workspace-link ap-workspace-link--active" data-workspace-view="home"><span>⌂</span><span>Home</span></button>
+          <button class="ap-workspace-link" data-workspace-view="my-tasks"><span>✓</span><span>My Tasks</span></button>
+          <button class="ap-workspace-link ap-library-toggle" aria-expanded="true"><span>▰</span><span>Library</span><span class="ap-workspace-link__chev">⌄</span></button>
+          <div class="ap-library-nav">
+            <button data-library-view="everything">Everything</button>
+            <button data-library-view="boards">Boards</button>
+            <button data-library-view="conversations">Conversations</button>
+            <button data-library-view="docs">Documents</button>
+            <button data-library-view="embeds">Embeds</button>
+            <button data-library-view="files">Files</button>
+          </div>
+        </nav>
+        <div class="ap-sidebar-section-head"><span>Folders</span></div>
+        <nav id="folder-tree" aria-label="Projects"></nav>
+      </aside>
+      <div id="sidebar-backdrop" class="ap-sidebar-backdrop"></div>
+      <main class="ap-main">
+        <section id="page-header" class="ap-page-header" hidden>
+          <div class="ap-page-header__title"><button id="back-to-folder" class="ap-icon-button" aria-label="Back to folder">←</button><div><nav id="breadcrumb" class="ap-breadcrumb"></nav><h1>Projects</h1></div></div>
+          <div id="folder-actions"></div>
+        </section>
+        <div id="module-tabs" class="ap-tabs" role="tablist" hidden>
+          <button class="ap-tab" data-module="conversation">Conversation</button><button class="ap-tab" data-module="boards">Board</button><button class="ap-tab" data-module="docs">Docs</button><button class="ap-tab" data-module="files">Files</button><button class="ap-tab" data-module="invoices">Invoices</button>
+        </div>
+        <section id="module-content" class="ap-module-content"></section>
+      </main>
+    </div>
+  </div>
+  <aside id="inbox-panel" class="ap-inbox-panel"></aside>
+</div>
+<div id="toast-container" class="ap-toast-container"></div><div id="modal-root"></div>
+<script type="module" src="js/clientApp.js"></script>
+</body>
+</html>

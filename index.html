@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Agency Portal</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/core.css">
+  <link rel="stylesheet" href="css/modules.css">
+  <link rel="stylesheet" href="css/portal.css">
+</head>
+<body>
+<div id="app" class="ap-app ap-app--workspace">
+  <aside id="global-rail" class="ap-global-rail" aria-label="Global navigation">
+    <button class="ap-rail-brand" data-global-view="home" aria-label="Home">CO</button>
+    <nav class="ap-rail-nav">
+      <button class="ap-rail-item ap-rail-item--active" data-global-view="home" aria-label="Home"><span class="ap-rail-icon">⌂</span><span>Home</span></button>
+      <button class="ap-rail-item" data-global-view="inbox" aria-label="Inbox"><span class="ap-rail-icon">▣</span><span>Inbox</span></button>
+      <button class="ap-rail-item" data-global-view="tasks" aria-label="Tasks"><span class="ap-rail-icon">☷</span><span>Tasks</span></button>
+      <button class="ap-rail-item" data-global-view="invoices" aria-label="Invoices"><span class="ap-rail-icon">▤</span><span>Invoices</span></button>
+      <button class="ap-rail-item" data-global-view="more" aria-label="More"><span class="ap-rail-icon">•••</span><span>More</span></button>
+    </nav>
+  </aside>
+
+  <div class="ap-workspace-shell">
+    <header id="workspace-header" class="ap-header">
+      <button id="sidebar-toggle" class="ap-icon-button ap-mobile-menu" aria-label="Open navigation">☰</button>
+      <div class="ap-header-spacer"></div>
+      <div id="global-search" class="ap-search">
+        <span class="ap-search__icon" aria-hidden="true">⌕</span>
+        <input type="search" placeholder="Search workspace…" aria-label="Search workspace">
+        <div id="global-search-results"></div>
+      </div>
+      <div id="user-menu" class="ap-user-menu"></div>
+    </header>
+
+    <div class="ap-body">
+      <aside id="workspace-sidebar" class="ap-sidebar">
+        <div id="agency-identity" class="ap-agency-identity"></div>
+        <nav class="ap-workspace-nav" aria-label="Workspace navigation">
+          <button class="ap-workspace-link ap-workspace-link--active" data-workspace-view="home"><span>⌂</span><span>Home</span></button>
+          <button class="ap-workspace-link" data-workspace-view="my-tasks"><span>✓</span><span>My Tasks</span></button>
+          <button class="ap-workspace-link ap-library-toggle" aria-expanded="true"><span>▰</span><span>Library</span><span class="ap-workspace-link__chev">⌄</span></button>
+          <div class="ap-library-nav">
+            <button data-library-view="everything">Everything</button>
+            <button data-library-view="boards">Boards</button>
+            <button data-library-view="conversations">Conversations</button>
+            <button data-library-view="docs">Documents</button>
+            <button data-library-view="embeds">Embeds</button>
+            <button data-library-view="files">Files</button>
+            <button data-library-view="archive">Archive</button>
+            <button data-library-view="trash">Trash</button>
+          </div>
+        </nav>
+
+        <div class="ap-sidebar-section-head">
+          <span>Folders</span>
+          <button id="new-folder" class="ap-icon-button" aria-label="New folder">+</button>
+        </div>
+        <nav id="folder-tree" aria-label="Folders"></nav>
+        <div id="sidebar-admin" class="ap-sidebar-admin"></div>
+      </aside>
+
+      <div id="sidebar-backdrop" class="ap-sidebar-backdrop"></div>
+
+      <main class="ap-main">
+        <section id="page-header" class="ap-page-header" hidden>
+          <div class="ap-page-header__title">
+            <button id="back-to-folder" class="ap-icon-button" aria-label="Back to folder">←</button>
+            <div><nav id="breadcrumb" class="ap-breadcrumb" aria-label="Breadcrumb"></nav><h1>Workspace</h1></div>
+          </div>
+          <div id="folder-actions"></div>
+        </section>
+        <div id="module-tabs" class="ap-tabs" role="tablist" hidden>
+          <button class="ap-tab" data-module="conversation" role="tab">Conversation</button>
+          <button class="ap-tab" data-module="boards" role="tab">Board</button>
+          <button class="ap-tab" data-module="docs" role="tab">Docs</button>
+          <button class="ap-tab" data-module="files" role="tab">Files</button>
+          <button class="ap-tab" data-module="invoices" role="tab">Invoices</button>
+        </div>
+        <section id="module-content" class="ap-module-content"></section>
+      </main>
+    </div>
+  </div>
+
+  <aside id="inbox-panel" class="ap-inbox-panel" aria-label="Inbox"></aside>
+  <div id="more-menu" class="ap-popover-menu" hidden></div>
+</div>
+<div id="toast-container" class="ap-toast-container"></div>
+<div id="modal-root"></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
