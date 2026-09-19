@@ -108,7 +108,7 @@ Owner → Team → Invite team member. The app sends the invitation email and al
 
 Clients → create a client company → Invite contact. The app sends the invitation email and also shows a backup link.
 
-Invitations are delivered through EmailJS using the service, template, and public key in `js/config.js`. The authenticated invitee must use the same email address as the invitation. Membership role comes only from the stored invitation row.
+Invitations are delivered through EmailJS using the service, template, and public key in `js/config.js`. Client invitations use a passwordless, one-time link that opens only the client portal. Team invitations continue to require a normal workspace account. Membership role comes only from the stored invitation row.
 
 ## 7. Folder sharing
 
@@ -294,4 +294,4 @@ The implementation recreates the visual layout from the provided references; it 
 
 ### Invitation email delivery
 
-Client and team invitations are sent with EmailJS through the connected Gmail service. EmailJS must have an invitation template containing `{{to_email}}` and `{{invite_link}}`. If delivery fails, the invitation is revoked and the UI displays the EmailJS error.
+Client and team invitations are sent with EmailJS through the connected Gmail service. EmailJS must have an invitation template containing `{{to_email}}` and `{{invite_link}}`. The `start-client-access` Edge Function creates a short-lived, passwordless client session from a valid client invitation; deploy it with `--no-verify-jwt`. If delivery fails, the invitation is revoked and the UI displays the EmailJS error.

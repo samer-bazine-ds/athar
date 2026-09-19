@@ -4,6 +4,7 @@ import { transform } from "esbuild";
 const functions = [
   "supabase/functions/create-checkout-session/index.ts",
   "supabase/functions/send-invitation-email/index.ts",
+  "supabase/functions/start-client-access/index.ts",
   "supabase/functions/stripe-webhook/index.ts"
 ];
 
