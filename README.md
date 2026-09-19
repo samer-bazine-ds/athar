@@ -43,9 +43,10 @@ Then run the remaining migrations **in this order**:
 supabase/migrations/0200_search_task_descriptions.sql
 supabase/migrations/0250_security_repairs.sql
 supabase/migrations/0300_portal_experience.sql
+supabase/migrations/0400_invitation_lifecycle.sql
 ```
 
-`0250_security_repairs.sql` contains the consolidated RLS/bootstrap fixes (including the workspace/folder permission issues discovered during testing). `0300_portal_experience.sql` adds the global Library experience, Embeds, and separate Archive/Trash support.
+`0250_security_repairs.sql` contains the consolidated RLS/bootstrap fixes (including the workspace/folder permission issues discovered during testing). `0300_portal_experience.sql` adds the global Library experience, Embeds, and separate Archive/Trash support. `0400_invitation_lifecycle.sql` prevents accepted invitations from being reopened and makes invitation acceptance safe for existing memberships.
 
 The shared migration creates all 19 tables, functions, triggers, RPCs, RLS policies, Realtime publication entries, Storage buckets, and Storage policies described in `SHARED_SPEC.md`.
 
@@ -202,6 +203,7 @@ supabase/
     0200_search_task_descriptions.sql
     0250_security_repairs.sql
     0300_portal_experience.sql
+    0400_invitation_lifecycle.sql
   policies/README.md
   functions/
     create-checkout-session/index.ts
@@ -234,6 +236,15 @@ The implementation follows the frozen contract in `SHARED_SPEC.md`:
 - Stripe payment amount/currency are read server-side from the invoice row.
 
 ## 13. Verification before production
+
+Install the development checks once, then run the full static, lint, and browser smoke suite:
+
+```bash
+npm install
+npm run check
+```
+
+The browser suite starts its own local HTTP server on port `8765`.
 
 Run these acceptance cases with four test accounts: Owner, Team, Client A, Client B.
 
@@ -274,7 +285,7 @@ The implementation deliberately does **not** copy any third-party logo, propriet
 
 ### Fresh setup reminder
 
-For a fresh Supabase project, do not stop after `0001_shared_schema.sql`. Run all four migrations listed in section 2. If you already ran the earlier schema and the manual consolidated SQL repair patch, you can still run `0300_portal_experience.sql` afterward.
+For a fresh Supabase project, do not stop after `0001_shared_schema.sql`. Run every migration listed in section 2. If you already ran the earlier schema and the manual consolidated SQL repair patch, run `0300_portal_experience.sql` and `0400_invitation_lifecycle.sql` afterward.
 
 ## Kitchen-style interface update
 

@@ -5,6 +5,7 @@ export function escapeHtml(value) {
 }
 
 const ALLOWED_TAGS = new Set(["P","BR","STRONG","EM","U","S","H1","H2","H3","UL","OL","LI","BLOCKQUOTE","CODE","PRE","A","HR"]);
+const DROP_CONTENT_TAGS = new Set(["SCRIPT","STYLE","TEMPLATE","IFRAME","OBJECT","EMBED","SVG","MATH","FORM"]);
 export function sanitizeHtml(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(`<div>${String(html ?? "")}</div>`, "text/html");
@@ -14,7 +15,7 @@ export function sanitizeHtml(html) {
       if (node.nodeType === Node.COMMENT_NODE) { node.remove(); continue; }
       if (node.nodeType !== Node.ELEMENT_NODE) continue;
       const el = node;
-      if (el.tagName === "TEMPLATE") { el.remove(); continue; }
+      if (DROP_CONTENT_TAGS.has(el.tagName)) { el.remove(); continue; }
       clean(el);
       if (!ALLOWED_TAGS.has(el.tagName)) {
         el.replaceWith(...el.childNodes);

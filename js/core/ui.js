@@ -3,11 +3,20 @@ function button(label, variant = "secondary") { const b=document.createElement("
 export function describeError(error) {
   const code = error?.code || error?.details || ""; const message = String(error?.message || error || "");
   if (error?.userMessage && message) return message;
+  if (code === "invalid_credentials" || /invalid login credentials/i.test(message)) return "The email or password is incorrect.";
+  if (code === "email_not_confirmed" || /email not confirmed/i.test(message)) return "Confirm your email address before signing in.";
+  if (code === "user_already_exists" || /user already registered/i.test(message)) return "An account already exists for that email address.";
+  if (code === "weak_password" || /password should be at least/i.test(message)) return "Use a stronger password with at least 8 characters.";
+  if (/rate limit|too many requests/i.test(`${code} ${message}`)) return "Too many attempts. Wait a moment and try again.";
   if (code === "42501" || /row-level security|permission denied/i.test(message)) return "You don't have permission to do that.";
   if (code === "PGRST116") return "That item no longer exists.";
   if (code === "23505") return "That already exists.";
   if (code === "23514") return "Some of those values aren't valid.";
-  if (error instanceof TypeError && /fetch/i.test(message)) return "Can't reach the server. Check your connection and try again.";
+  if (code === "23503") return "That item is still in use and can't be removed.";
+  if (code === "23502") return "A required value is missing.";
+  if (code === "22P02") return "One of those values is invalid.";
+  if (error?.name === "AbortError") return "The request was cancelled. Please try again.";
+  if (error instanceof TypeError && /fetch|network|load failed/i.test(message)) return "Can't reach the server. Check your connection and try again.";
   console.error(error); return "Something went wrong. Please try again.";
 }
 export function toast(message, variant = "info") {

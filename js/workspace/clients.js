@@ -18,9 +18,8 @@ export async function renderClientsView(container){
     container.replaceChildren();container.className="ap-module-content k-page-panel k-clients-page";
     const root=el("section","k-clients-view");
     const tabs=el("div","k-client-tabs");
-    const clientsTab=button("","k-client-tab k-client-tab--active");clientsTab.innerHTML='<span class="k-client-tab__icon">♟</span><span>Clients</span>';
-    const companiesTab=button("","k-client-tab");companiesTab.innerHTML='<span class="k-client-tab__icon">▦</span><span>Companies</span>';
-    tabs.append(clientsTab,companiesTab);root.append(tabs);
+    const clientsTab=button("","k-client-tab k-client-tab--active");clientsTab.innerHTML='<span class="k-client-tab__icon">▦</span><span>Client companies</span>';
+    clientsTab.setAttribute("aria-current","page");tabs.append(clientsTab);root.append(tabs);
 
     const controls=el("div","k-client-controls");
     const left=el("div","k-client-controls__left");
@@ -30,7 +29,6 @@ export async function renderClientsView(container){
     controls.append(left,create);root.append(controls);
 
     const host=el("div","k-client-table-wrap");root.append(host);container.append(root);
-    let mode="clients";
     const draw=()=>{
       const q=search.value.trim().toLowerCase();let rows=clients.filter(c=>!q||`${c.name} ${c.contact_email||""}`.toLowerCase().includes(q));rows.sort((a,b)=>(sort.value==="asc"?1:-1)*(new Date(a.created_at)-new Date(b.created_at)));
       host.replaceChildren();
@@ -40,8 +38,6 @@ export async function renderClientsView(container){
       host.append(table,el("div","k-client-count",`1-${rows.length} of ${rows.length}`));
     };
     search.addEventListener("input",draw);sort.addEventListener("change",draw);
-    clientsTab.addEventListener("click",()=>{mode="clients";clientsTab.classList.add("k-client-tab--active");companiesTab.classList.remove("k-client-tab--active");draw();});
-    companiesTab.addEventListener("click",()=>{mode="companies";companiesTab.classList.add("k-client-tab--active");clientsTab.classList.remove("k-client-tab--active");draw();});
     draw();
   }catch(error){AppCore.ui.renderError(container,error,()=>renderClientsView(container));}
 }
@@ -57,5 +53,5 @@ function openClientActions(client,done){
 }
 
 function openClientForm(client,done){const form=el("form","ap-stack");const name=input("Client name"),email=input("Email","email",false),notes=el("textarea","ap-textarea");notes.placeholder="Notes";name.value=client?.name||"";email.value=client?.contact_email||"";notes.value=client?.notes||"";const save=button(client?"Save":"Create Client","ap-btn ap-btn--primary");save.type="submit";form.append(name,email,notes,save);form.addEventListener("submit",async e=>{e.preventDefault();save.disabled=true;try{if(client){const {error}=await supabase.from("clients").update({name:name.value.trim(),contact_email:email.value||null,notes:notes.value||null}).eq("id",client.id);if(error)throw error;}else await createClientCompany({name:name.value,email:email.value,notes:notes.value});AppCore.ui.closeModal();done?.();}catch(err){AppCore.ui.toast(AppCore.ui.describeError(err),"error");}finally{save.disabled=false;}});AppCore.ui.openModal({title:client?"Edit Client":"Create Client",content:form,actions:[]});name.focus();}
-function openInvite(client){const form=el("form","ap-stack");const email=input("Client email","email");email.value=client.contact_email||"";const submit=button("Send invitation","ap-btn ap-btn--primary");submit.type="submit";const result=el("div","ap-invite-result");form.append(email,submit,result);form.addEventListener("submit",async e=>{e.preventDefault();submit.disabled=true;try{const inv=await inviteMember({email:email.value,role:"client",clientId:client.id});result.replaceChildren();result.append(el("p","ap-inline-message ap-inline-message--success",`Invitation email sent to ${email.value.trim()}.`),el("p","","You can also copy the invitation link: "),el("code","",inv.link));const copy=button("Copy link","ap-btn ap-btn--secondary");copy.type="button";copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(inv.link);AppCore.ui.toast("Invitation link copied.","success");}catch(err){AppCore.ui.toast("Could not copy the invitation link.","error");}});result.append(copy);}catch(err){AppCore.ui.toast(AppCore.ui.describeError(err),"error");}finally{submit.disabled=false;}});AppCore.ui.openModal({title:`Invite to ${client.name}`,content:form,actions:[]});}
+function openInvite(client){const form=el("form","ap-stack");const email=input("Client email","email");email.value=client.contact_email||"";const submit=button("Send invitation","ap-btn ap-btn--primary");submit.type="submit";const result=el("div","ap-invite-result");form.append(email,submit,result);form.addEventListener("submit",async e=>{e.preventDefault();submit.disabled=true;try{const inv=await inviteMember({email:email.value,role:"client",clientId:client.id});result.replaceChildren();result.append(el("p","ap-inline-message ap-inline-message--success",`Invitation email sent to ${email.value.trim()}.`),el("p","","You can also copy the invitation link: "),el("code","",inv.link));const copy=button("Copy link","ap-btn ap-btn--secondary");copy.type="button";copy.addEventListener("click",async()=>{try{await navigator.clipboard.writeText(inv.link);AppCore.ui.toast("Invitation link copied.","success");}catch{AppCore.ui.toast("Could not copy the invitation link.","error");}});result.append(copy);}catch(err){AppCore.ui.toast(AppCore.ui.describeError(err),"error");}finally{submit.disabled=false;}});AppCore.ui.openModal({title:`Invite to ${client.name}`,content:form,actions:[]});}
 function input(placeholder,type="text",required=true){const x=el("input","ap-input");x.placeholder=placeholder;x.type=type;x.required=required;return x;}

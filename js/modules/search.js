@@ -75,9 +75,18 @@ function renderResults(results) {
     item.append(type, title);
     if (result.snippet) item.append(el("span", "ap-search-result__snippet", result.snippet));
     item.addEventListener("click", async () => {
-      const moduleName = MODULE_BY_ENTITY[result.entity_type] || "conversation";
       try {
-        await AppCore.selectFolder(result.folder_id);
+        if (result.entity_type === "embed") {
+          const { data, error } = await supabase.from("embeds").select("url").eq("id", result.entity_id).single();
+          if (error) throw error;
+          if (!/^https?:\/\//i.test(data.url)) throw new Error("This embed link is invalid.");
+          window.open(data.url, "_blank", "noopener,noreferrer");
+          clear();
+          if (state.input) state.input.value = "";
+          return;
+        }
+        const moduleName = MODULE_BY_ENTITY[result.entity_type] || "conversation";
+        await AppCore.selectFolder(result.folder_id, { skipOverview: true });
         await AppCore.selectModule(moduleName);
         clear();
         if (state.input) state.input.value = "";

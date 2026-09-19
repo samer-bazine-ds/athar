@@ -11,10 +11,17 @@ export async function restoreAuth(surface = null) {
   setState({session,user:session?.user||null,surface});
   if(session?.user) await loadIdentity();
   if(!authSubscription){
-    const { data }=supabase.auth.onAuthStateChange(async(event,sessionNow)=>{
+    const { data }=supabase.auth.onAuthStateChange((event,sessionNow)=>{
       setState({session:sessionNow,user:sessionNow?.user||null});
       emit("auth:changed",{event,userId:sessionNow?.user?.id||null,hasSession:Boolean(sessionNow)});
-      if(sessionNow?.user && event!=="TOKEN_REFRESHED") { try{await loadIdentity();}catch(error){console.error(error);} }
+      if(!sessionNow?.user){
+        setState({profile:null,memberships:[],agency:null,membership:null,role:null,clientId:null,folders:[],selectedFolderId:null,selectedModule:null,ready:false});
+        if(getState().surface!=="login") location.replace("login.html");
+      }else if(event!=="TOKEN_REFRESHED"){
+        // Do not await Supabase calls inside the auth callback; the auth client
+        // holds an internal lock while this callback runs.
+        setTimeout(()=>loadIdentity().catch(error=>console.error(error)),0);
+      }
     });
     authSubscription=data.subscription;
   }

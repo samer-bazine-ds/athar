@@ -1,0 +1,17 @@
+{
+  "name": "athar-agency-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run verify && npm run lint && npm test",
+    "verify": "node scripts/verify.mjs && node scripts/verify-edge.mjs",
+    "lint": "eslint js",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0"
+  }
+}

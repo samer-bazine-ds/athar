@@ -29,25 +29,6 @@ export function insertionPosition(sortedRows, index) {
   return Math.floor((rows[index - 1].position + rows[index].position) / 2);
 }
 
-function taskUpsertRow(task) {
-  return {
-    id: task.id,
-    agency_id: task.agency_id,
-    folder_id: task.folder_id,
-    board_id: task.board_id,
-    column_id: task.column_id,
-    title: task.title,
-    description: task.description ?? null,
-    assignee_id: task.assignee_id ?? null,
-    due_date: task.due_date ?? null,
-    priority: task.priority ?? "normal",
-    client_visible: Boolean(task.client_visible),
-    position: Number(task.position) || 0,
-    completed_at: task.completed_at ?? null,
-    created_by: task.created_by
-  };
-}
-
 export async function renormalizeTasks(rows) {
   const ordered = sortByPosition(rows).map((row, index) => ({ ...row, position: (index + 1) * POSITION_STEP }));
   if (!ordered.length) return ordered;

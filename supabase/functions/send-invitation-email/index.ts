@@ -23,6 +23,21 @@ function escapeHtml(value: string) {
   }[character] || character));
 }
 
+function providerMessage(body: string) {
+  try {
+    const parsed = JSON.parse(body);
+    const message = typeof parsed?.message === "string" ? parsed.message : typeof parsed?.error === "string" ? parsed.error : "";
+    return message.replace(/[\r\n\t]+/g, " ").trim().slice(0, 240);
+  } catch {
+    return "";
+  }
+}
+
+async function revokeInvitation(client: ReturnType<typeof createClient>, invitationId: string) {
+  const { error } = await client.from("invitations").update({ status: "revoked" }).eq("id", invitationId).eq("status", "pending");
+  if (error) console.error("Failed to revoke invitation", invitationId, error);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -35,10 +50,19 @@ Deno.serve(async (req) => {
   const appBaseUrl = Deno.env.get("APP_BASE_URL")?.replace(/\/+$/, "");
   const authorization = req.headers.get("Authorization");
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey || !resendApiKey || !fromEmail || !appBaseUrl) {
-    return json({ error: "Invitation email service is not configured" }, 503);
-  }
   if (!authorization) return json({ error: "Authentication required" }, 401);
+  const missingSettings = [
+    ["SUPABASE_URL", supabaseUrl],
+    ["SUPABASE_ANON_KEY", anonKey],
+    ["SUPABASE_SERVICE_ROLE_KEY", serviceRoleKey],
+    ["RESEND_API_KEY", resendApiKey],
+    ["INVITATION_FROM_EMAIL", fromEmail],
+    ["APP_BASE_URL", appBaseUrl]
+  ].filter(([, value]) => !value).map(([name]) => name);
+  if (missingSettings.length) {
+    console.error("Invitation email service is missing settings", missingSettings);
+    return json({ error: `Invitation email is not configured. Missing: ${missingSettings.join(", ")}.` }, 503);
+  }
 
   let payload: { invitation_id?: string };
   try {
@@ -50,11 +74,11 @@ Deno.serve(async (req) => {
     return json({ error: "invitation_id is required" }, 400);
   }
 
-  const requestClient = createClient(supabaseUrl, anonKey, {
+  const requestClient = createClient(supabaseUrl!, anonKey!, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: { headers: { Authorization: authorization } }
   });
-  const serviceClient = createClient(supabaseUrl, serviceRoleKey, {
+  const serviceClient = createClient(supabaseUrl!, serviceRoleKey!, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
 
@@ -69,29 +93,44 @@ Deno.serve(async (req) => {
     .maybeSingle();
   if (invitationError || !invitation) return json({ error: "Invitation not found" }, 404);
 
-  const link = `${appBaseUrl}/login.html?invite=${encodeURIComponent(invitation.token)}`;
-  const agencyName = escapeHtml(invitation.agencies?.name || "your workspace");
+  if (new Date(invitation.expires_at).getTime() <= Date.now()) {
+    await serviceClient.from("invitations").update({ status: "expired" }).eq("id", invitation.id).eq("status", "pending");
+    return json({ error: "This invitation has expired. Create a new invitation." }, 410);
+  }
+
+  const agency = Array.isArray(invitation.agencies) ? invitation.agencies[0] : invitation.agencies;
+  const agencyLabel = agency?.name || "your workspace";
+  const link = `${appBaseUrl!}/login.html?invite=${encodeURIComponent(invitation.token)}`;
+  const agencyName = escapeHtml(agencyLabel);
   const roleLabel = invitation.intended_role === "client" ? "client portal" : "team workspace";
   const html = `<p>You have been invited to join <strong>${agencyName}</strong>.</p>
     <p>Use the button below to create your account and join the ${roleLabel}.</p>
     <p><a href="${link}" style="display:inline-block;padding:12px 18px;background:#3f5bf6;color:#fff;text-decoration:none;border-radius:6px">Accept invitation</a></p>
     <p>This invitation expires in 14 days.</p>`;
 
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: [invitation.email],
-      subject: `Invitation to join ${invitation.agencies?.name || "your workspace"}`,
-      html
-    })
-  });
+  let response: Response;
+  try {
+    response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${resendApiKey!}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: [invitation.email],
+        subject: `Invitation to join ${agencyLabel}`,
+        html
+      })
+    });
+  } catch (error) {
+    console.error("Invitation email provider could not be reached", error);
+    await revokeInvitation(serviceClient, invitation.id);
+    return json({ error: "The email provider could not be reached. Try again shortly." }, 502);
+  }
   if (!response.ok) {
     const details = await response.text();
     console.error("Invitation email provider failed", response.status, details);
-    await serviceClient.from("invitations").update({ status: "revoked" }).eq("id", invitation.id).eq("status", "pending");
-    return json({ error: "The invitation email could not be sent" }, 502);
+    await revokeInvitation(serviceClient, invitation.id);
+    const reason = providerMessage(details);
+    return json({ error: reason ? `Email provider rejected the invitation: ${reason}` : "The email provider rejected the invitation. Check the sender domain and API key." }, 502);
   }
 
   return json({ link, email_sent: true });

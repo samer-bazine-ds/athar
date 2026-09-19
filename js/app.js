@@ -6,9 +6,7 @@ import { renderFolderTree, openCreateFolder } from "./workspace/folderTree.js";
 import { renderBreadcrumb, selectFolder } from "./workspace/folders.js";
 import { openFolderSharing } from "./workspace/folderPermissions.js";
 import { renderClientsView } from "./workspace/clients.js?v=invite-email-4";
-import { renderMembersView } from "./workspace/members.js";
-import { saveBranding } from "./workspace/branding.js";
-import { selectModule, unmountActiveModule, updateTabs } from "./core/moduleRegistry.js";
+import { selectModule, unmountActiveModule } from "./core/moduleRegistry.js";
 import { mountGlobalSearch } from "./modules/search.js";
 import { AppCore } from "./core/appCore.js";
 import { renderHome, renderTasksHub, renderInvoicesHub, renderLibrary, renderInbox, openTemplates, renderFolderOverview, renderProfileView } from "./views/portalViews.js";
@@ -118,7 +116,7 @@ async function showView(view, options = {}) {
 }
 
 async function showFolderOverview(folderId) {
-  currentView = "folder"; await unmountActiveModule(); setState({ selectedModule: null, selectedFolderId: null }); renderFolderTree(); hideFolderChrome(); markNavigation("folder"); renderFolderTree();
+  currentView = "folder"; await unmountActiveModule(); setState({ selectedModule: null, selectedFolderId: folderId }); hideFolderChrome(); markNavigation("folder"); renderFolderTree();
   const content = document.getElementById("module-content"); content.className = "ap-module-content";
   await renderFolderOverview(content, AppCore.getModuleContext(), folderId);
   content.setAttribute("aria-busy", "false");
