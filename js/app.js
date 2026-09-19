@@ -5,12 +5,12 @@ import { activateAgency } from "./workspace/agencies.js";
 import { renderFolderTree, openCreateFolder } from "./workspace/folderTree.js";
 import { renderBreadcrumb, selectFolder } from "./workspace/folders.js";
 import { openFolderSharing } from "./workspace/folderPermissions.js";
-import { renderClientsView } from "./workspace/clients.js?v=emailjs-1";
+import { renderClientsView } from "./workspace/clients.js?v=emailjs-2";
 import { selectModule, unmountActiveModule } from "./core/moduleRegistry.js";
 import { mountGlobalSearch } from "./modules/search.js";
 import { AppCore } from "./core/appCore.js";
 import { renderHome, renderTasksHub, renderInvoicesHub, renderLibrary, renderInbox, openTemplates, renderFolderOverview, renderProfileView } from "./views/portalViews.js";
-import { renderSettingsHub } from "./views/kitchenSettings.js?v=emailjs-1";
+import { renderSettingsHub } from "./views/kitchenSettings.js?v=emailjs-2";
 
 let currentView = "home";
 let currentLibraryView = "everything";
