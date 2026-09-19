@@ -5,7 +5,7 @@ import { activateAgency } from "./workspace/agencies.js";
 import { renderFolderTree, openCreateFolder } from "./workspace/folderTree.js";
 import { renderBreadcrumb, selectFolder } from "./workspace/folders.js";
 import { openFolderSharing } from "./workspace/folderPermissions.js";
-import { renderClientsView } from "./workspace/clients.js?v=invite-email-2";
+import { renderClientsView } from "./workspace/clients.js?v=invite-email-3";
 import { renderMembersView } from "./workspace/members.js";
 import { saveBranding } from "./workspace/branding.js";
 import { selectModule, unmountActiveModule, updateTabs } from "./core/moduleRegistry.js";
