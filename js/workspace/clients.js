@@ -4,7 +4,7 @@ import { AppCore } from "../core/appCore.js";
 import { inviteMember } from "../auth/invitations.js?v=invite-email-1";
 
 export async function listClients(){const s=getState();const {data,error}=await supabase.from("clients").select("*").eq("agency_id",s.agency.id).is("archived_at",null).order("created_at",{ascending:false});if(error)throw error;return data||[];}
-export async function createClientCompany({name,email,notes}){const s=getState();const {data,error}=await supabase.from("clients").insert({agency_id:s.agency.id,name:name.trim(),contact_email:email||null,notes:notes||null,created_by:s.user.id}).select().single();if(error)throw error;return data;}
+export async function createClientCompany({name,email,notes}){const s=getState();const {error}=await supabase.from("clients").insert({agency_id:s.agency.id,name:name.trim(),contact_email:email?.trim()||null,notes:notes?.trim()||null,created_by:s.user.id});if(error)throw error;}
 
 function el(tag,cls="",text=null){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==null)n.textContent=text;return n;}
 function button(text,cls){const b=el("button",cls,text);b.type="button";return b;}
