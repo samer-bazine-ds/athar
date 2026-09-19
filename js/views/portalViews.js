@@ -105,7 +105,7 @@ function renderDataTable(host, items, { showVisibility = true, onOpen = navigate
     open.addEventListener("click", () => onOpen(item));
     nameCell.append(open);
     row.append(nameCell, el("span", "ap-library-muted", TYPE_META[item.type]?.label || item.type));
-    if (showVisibility) row.append(el("span", "ap-library-muted", item.visibility || "—"));
+    if (showVisibility) row.append(el("span", "ap-library-muted", item.visibility === "Client" ? "Shared with clients" : item.visibility === "Internal" ? "--" : (item.visibility || "--")));
     row.append(el("span", "ap-library-muted", safeDate(item.created_at)));
     const actionCell = el("div", "ap-library-actions");
     if (actions) actions(item, actionCell);
@@ -138,52 +138,56 @@ export async function renderHome(container, context) {
   try {
     const recentItems = await queryRecentItems(context.agencyId);
     container.replaceChildren();
+    if (container.id === "module-content") container.className = "ap-module-content k-page-panel k-home-page";
+    else container.classList.add("k-home-embedded");
     const root = el("section", "ap-hub-view ap-home-view");
     root.dataset.view = "home";
+    const displayName = context.profile?.full_name || context.profile?.email?.split("@")[0] || "there";
     const hero = el("div", "ap-home-hero");
-    hero.append(titleBlock(`Welcome, ${context.profile?.full_name || context.profile?.email || "there"}!`, "Everything your agency is working on, in one place."));
+    hero.append(el("h1", "k-home-welcome", `👋 Welcome, ${displayName}!`));
     root.append(hero);
 
     const liveFolders = AppCore.getFolders().filter((f) => !f.archived_at && !f.trashed_at).slice(0, 4);
-    if (liveFolders.length) {
-      const folderSection = el("section", "ap-home-section");
-      folderSection.append(el("h2", "ap-section-label", "Recent folders"));
-      const cards = el("div", "ap-folder-cards");
-      for (const folder of liveFolders) {
-        const card = btn("", "ap-folder-card");
-        const tile = el("span", "ap-folder-card__tile"); tile.style.setProperty("--folder-color", folder.color || "var(--color-folder)"); tile.append(icon("folder"));
-        const count = recentItems.filter((item) => item.folder_id === folder.id).length;
-        card.append(tile, el("strong", "ap-folder-card__name", folder.name), el("small", "ap-folder-card__meta", `${count} recent item${count === 1 ? "" : "s"}`));
-        card.addEventListener("click", () => selectFolder(folder.id));
-        cards.append(card);
-      }
-      folderSection.append(cards); root.append(folderSection);
+    const folderSection = el("section", "ap-home-section");
+    folderSection.append(el("h2", "ap-section-label", "Recent Folders"));
+    const cards = el("div", "ap-folder-cards");
+    for (const folder of liveFolders) {
+      const card = btn("", "ap-folder-card");
+      const tile = el("span", "ap-folder-card__tile");
+      tile.style.setProperty("--folder-color", folder.color || "#ffbd0a");
+      tile.append(icon("folder"));
+      const count = recentItems.filter((item) => item.folder_id === folder.id).length;
+      card.append(tile, el("strong", "ap-folder-card__name", folder.name), el("small", "ap-folder-card__meta", `${count} item${count === 1 ? "" : "s"}`));
+      card.addEventListener("click", () => selectFolder(folder.id));
+      cards.append(card);
     }
+    if (!liveFolders.length) cards.append(el("div", "ap-soft-empty", "Your folders will appear here."));
+    folderSection.append(cards); root.append(folderSection);
 
-    if (context.isStaff) {
-      const create = el("section", "ap-home-section");
-      create.append(el("h2", "ap-section-label", "Create"));
-      const cards = el("div", "ap-create-grid");
-      const specs = [
-        ["New Folder", "Organize everything", "folder", () => openCreateFolder()],
-        ["Board", "Track projects", "board", () => chooseFolder("Choose a folder for the board", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("boards"); AppCore.ui.toast("Use New board to create it here.", "info"); })],
-        ["Conversation", "Discuss anything", "chat", () => chooseFolder("Choose a folder for the conversation", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("conversation"); AppCore.ui.toast("Use New conversation to start it here.", "info"); })],
-        ["Embed", "Add third-party apps", "link", () => openEmbedForm(context)],
-        ["Document", "Curate content", "doc", () => chooseFolder("Choose a folder for the document", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("docs"); AppCore.ui.toast("Use New document to create it here.", "info"); })],
-        ["Invoice", "Bill clients", "invoice", () => chooseFolder("Choose a folder for the invoice", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("invoices"); AppCore.ui.toast("Use New invoice to create it here.", "info"); })]
-      ];
-      for (const [label, sub, iconName, handler] of specs) {
-        const card = btn("", "ap-create-card"); card.append(icon(iconName), el("strong", "", label), el("small", "", sub)); card.addEventListener("click", handler); cards.append(card);
-      }
-      create.append(cards); root.append(create);
-    }
-
-    const recent = el("section", "ap-home-section");
-    recent.append(el("h2", "ap-section-label", "Recent items"));
+    const recent = el("section", "ap-home-section k-home-recent");
+    recent.append(el("h2", "ap-section-label", "Recent Items"));
     const recentHost = el("div");
     if (recentItems.length) renderDataTable(recentHost, recentItems, { showVisibility: true });
     else recentHost.append(el("p", "ap-soft-empty", "Your recent work will appear here."));
     recent.append(recentHost); root.append(recent);
+
+    if (context.isStaff) {
+      const create = el("section", "ap-home-section k-home-create");
+      create.append(el("h2", "ap-section-label", "Create"));
+      const createCards = el("div", "ap-create-grid");
+      const specs = [
+        ["New Folder", "Organize everything", "folder", () => openCreateFolder()],
+        ["Board", "Track projects", "board", () => chooseFolder("Choose a folder for the board", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("boards"); })],
+        ["Conversation", "Discuss anything", "chat", () => chooseFolder("Choose a folder for the conversation", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("conversation"); })],
+        ["Embed", "Add third-party apps", "link", () => openEmbedForm(context)],
+        ["Document", "Curate content", "doc", () => chooseFolder("Choose a folder for the document", async (folderId) => { await selectFolder(folderId, { skipOverview: true }); await selectModule("docs"); })],
+        ["Client", "Invite clients", "members", () => document.dispatchEvent(new CustomEvent("kitchen:clients"))]
+      ];
+      for (const [label, sub, iconName, handler] of specs) {
+        const card = btn("", "ap-create-card"); card.append(icon(iconName), el("strong", "", label), el("small", "", sub)); card.addEventListener("click", handler); createCards.append(card);
+      }
+      create.append(createCards); root.append(create);
+    }
     container.append(root);
   } catch (error) { AppCore.ui.renderError(container, error, () => renderHome(container, context)); }
 }
@@ -382,17 +386,81 @@ async function loadTasks(context, mineOnly = false) {
 
 export async function renderTasksHub(container, context, { mineOnly = false } = {}) {
   AppCore.ui.renderLoading(container,"Loading tasks…");
-  try{const tasks=await loadTasks(context,mineOnly);container.replaceChildren();const root=el("section","ap-hub-view ap-tasks-hub");const heading=el("div","ap-library-heading");heading.append(titleBlock(mineOnly?"My Tasks":"Tasks",mineOnly?"Everything currently assigned to you.":"Track work across every project."));const toggles=el("div","ap-view-toggle");const tableBtn=btn("Table","ap-view-toggle__button ap-view-toggle__button--active");const calBtn=btn("Calendar","ap-view-toggle__button");toggles.append(tableBtn,calBtn);heading.append(toggles);root.append(heading);const tabs=el("div","ap-subtabs");const all=btn("All Tasks","ap-subtab ap-subtab--active");const completed=btn("Completed","ap-subtab");tabs.append(all,completed);root.append(tabs);const host=el("div");root.append(host);container.append(root);let mode="table",filter="all";const draw=()=>{const list=tasks.filter(t=>filter==="completed"?!!t.completed_at:!t.completed_at);if(mode==="calendar")renderTaskCalendar(host,list);else renderTaskTable(host,list);};tableBtn.addEventListener("click",()=>{mode="table";tableBtn.classList.add("ap-view-toggle__button--active");calBtn.classList.remove("ap-view-toggle__button--active");draw();});calBtn.addEventListener("click",()=>{mode="calendar";calBtn.classList.add("ap-view-toggle__button--active");tableBtn.classList.remove("ap-view-toggle__button--active");draw();});all.addEventListener("click",()=>{filter="all";all.classList.add("ap-subtab--active");completed.classList.remove("ap-subtab--active");draw();});completed.addEventListener("click",()=>{filter="completed";completed.classList.add("ap-subtab--active");all.classList.remove("ap-subtab--active");draw();});draw();}catch(error){AppCore.ui.renderError(container,error,()=>renderTasksHub(container,context,{mineOnly}));}
+  try {
+    const [tasks,{data:boards,error:bErr}] = await Promise.all([
+      loadTasks(context,mineOnly),
+      supabase.from("boards").select("id,title").eq("agency_id",context.agencyId)
+    ]);
+    if (bErr) throw bErr;
+    const boardMap = new Map((boards||[]).map(b=>[b.id,b.title]));
+    container.replaceChildren();
+    if (container.id === "module-content") container.className = "ap-module-content k-page-panel k-tasks-page";
+    const root=el("section","ap-hub-view ap-tasks-hub");
+    const openTasks=tasks.filter(t=>!t.completed_at), completedTasks=tasks.filter(t=>!!t.completed_at);
+    const top=el("div","k-task-top");
+    const statusTabs=el("div","k-task-status-tabs");
+    const all=btn("","k-task-status-tab k-task-status-tab--active");all.append(document.createTextNode("All Tasks "),el("small","",String(openTasks.length)));
+    const completed=btn("Completed","k-task-status-tab");statusTabs.append(all,completed);
+    const actions=el("div","k-task-actions");["▽","↕","☷","•••"].forEach(x=>actions.append(btn(x,"k-task-action")));top.append(statusTabs,actions);root.append(top);
+    const modes=el("div","k-task-mode-tabs");const tableBtn=btn("Table","k-task-mode-tab k-task-mode-tab--active"),calBtn=btn("Calendar","k-task-mode-tab");modes.append(tableBtn,calBtn);root.append(modes);
+    const host=el("div","k-task-host");root.append(host);container.append(root);
+    let mode="table",filter="all",calendarDate=new Date();
+    const draw=()=>{const list=filter==="completed"?completedTasks:openTasks;if(mode==="calendar")renderTaskCalendar(host,list,calendarDate,(next)=>{calendarDate=next;draw();});else renderTaskTable(host,list,boardMap);};
+    tableBtn.addEventListener("click",()=>{mode="table";root.classList.remove("k-calendar-mode");tableBtn.classList.add("k-task-mode-tab--active");calBtn.classList.remove("k-task-mode-tab--active");draw();});
+    calBtn.addEventListener("click",()=>{mode="calendar";root.classList.add("k-calendar-mode");calBtn.classList.add("k-task-mode-tab--active");tableBtn.classList.remove("k-task-mode-tab--active");draw();});
+    all.addEventListener("click",()=>{filter="all";all.classList.add("k-task-status-tab--active");completed.classList.remove("k-task-status-tab--active");draw();});
+    completed.addEventListener("click",()=>{filter="completed";completed.classList.add("k-task-status-tab--active");all.classList.remove("k-task-status-tab--active");draw();});
+    draw();
+  } catch(error) { AppCore.ui.renderError(container,error,()=>renderTasksHub(container,context,{mineOnly})); }
 }
-function renderTaskTable(host,tasks){host.replaceChildren();if(!tasks.length){const empty=el("div","ap-centered-empty");empty.append(icon("check"),el("h3","","All done"),el("p","","There are no tasks in this view."));host.append(empty);return;}const items=tasks.map(t=>({id:t.id,type:"task",folder_id:t.folder_id,title:t.title,subtitle:t.description||"",visibility:t.client_visible?"Client":"Internal",created_at:t.due_date||t.created_at,raw:t}));renderDataTable(host,items,{showVisibility:true,onOpen:navigateItem});}
-function renderTaskCalendar(host,tasks){host.replaceChildren();const now=new Date();const year=now.getFullYear(),month=now.getMonth();const first=new Date(year,month,1);const last=new Date(year,month+1,0);const grid=el("div","ap-calendar");const head=el("div","ap-calendar__header");head.append(el("strong","",now.toLocaleDateString(undefined,{month:"long",year:"numeric"})));grid.append(head);const days=el("div","ap-calendar__days");["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].forEach(d=>days.append(el("span","ap-calendar__weekday",d)));for(let i=0;i<first.getDay();i++)days.append(el("div","ap-calendar__cell ap-calendar__cell--muted"));for(let day=1;day<=last.getDate();day++){const cell=el("div","ap-calendar__cell");cell.append(el("span","ap-calendar__date",String(day)));const iso=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;tasks.filter(t=>t.due_date===iso).slice(0,3).forEach(t=>{const chip=btn(t.title,"ap-calendar__task");chip.addEventListener("click",()=>navigateItem({type:"task",folder_id:t.folder_id}));cell.append(chip);});days.append(cell);}grid.append(days);host.append(grid);}
+function renderTaskTable(host,tasks,boardMap=new Map()){
+  host.replaceChildren();
+  const table=el("div","k-task-table");
+  const head=el("div","k-task-row k-task-row--head");["Task","Board","Members","Due Date"].forEach(x=>head.append(el("span","",x)));table.append(head);
+  if(!tasks.length){table.append(el("div","k-task-empty","No tasks in this view"));host.append(table);return;}
+  for(const t of tasks){const row=el("div","k-task-row");const task=el("div","k-task-name");const check=btn("","k-task-check");check.setAttribute("aria-label","Open task");check.addEventListener("click",()=>navigateItem({type:"task",folder_id:t.folder_id}));task.append(check,el("strong","",t.title));row.append(task,el("span","",boardMap.get(t.board_id)||"—"),el("span","k-task-muted",t.assignee_id?"1":"--"),el("span","k-task-muted",t.due_date?safeDate(t.due_date):"--"));table.append(row);}
+  host.append(table,el("div","k-task-count",`1-${tasks.length} of ${tasks.length}`));
+}
+function renderTaskCalendar(host,tasks,focusDate=new Date(),onNavigate){
+  host.replaceChildren();
+  const year=focusDate.getFullYear(),month=focusDate.getMonth();
+  const first=new Date(year,month,1),last=new Date(year,month+1,0);
+  const start=new Date(first);start.setDate(first.getDate()-((first.getDay()+6)%7));
+  const end=new Date(last);end.setDate(last.getDate()+(6-((last.getDay()+6)%7)));
+  const wrap=el("div","k-calendar");const toolbar=el("div","k-calendar-toolbar");
+  const prev=btn("‹","k-calendar-nav"),next=btn("›","k-calendar-nav");
+  prev.addEventListener("click",()=>onNavigate?.(new Date(year,month-1,1)));next.addEventListener("click",()=>onNavigate?.(new Date(year,month+1,1)));
+  const title=el("strong","",focusDate.toLocaleDateString(undefined,{month:"long",year:"numeric"}));toolbar.append(prev,title,next);wrap.append(toolbar);
+  const week=el("div","k-calendar-weekdays");["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].forEach(d=>week.append(el("span","",d)));wrap.append(week);
+  const grid=el("div","k-calendar-grid");
+  const weeks=Math.round((end-start)/86400000+1)/7;grid.style.gridTemplateRows=`repeat(${weeks},minmax(100px,1fr))`;
+  const today=new Date();today.setHours(0,0,0,0);
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    const date=new Date(d),cell=el("div","k-calendar-cell");if(date.getMonth()!==month)cell.classList.add("k-calendar-cell--muted");
+    const num=el("span","k-calendar-date",String(date.getDate()));if(+date===+today)num.classList.add("k-calendar-date--today");cell.append(num);
+    const iso=`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    tasks.filter(t=>t.due_date===iso).slice(0,3).forEach(t=>{const chip=btn(t.title,"k-calendar-task");chip.addEventListener("click",()=>navigateItem({type:"task",folder_id:t.folder_id}));cell.append(chip);});grid.append(cell);
+  }
+  wrap.append(grid);host.append(wrap);
+}
 
 export async function renderInvoicesHub(container,context){AppCore.ui.renderLoading(container,"Loading invoices…");try{const [{data:invoices,error:iErr},{data:clients,error:cErr}]=await Promise.all([supabase.from("invoices").select("*").eq("agency_id",context.agencyId).order("created_at",{ascending:false}),context.isStaff?supabase.from("clients").select("id,name").eq("agency_id",context.agencyId).is("archived_at",null):Promise.resolve({data:[],error:null})]);if(iErr)throw iErr;if(cErr)throw cErr;const clientMap=new Map((clients||[]).map(c=>[c.id,c.name]));container.replaceChildren();const root=el("section","ap-hub-view ap-global-invoices");const heading=el("div","ap-library-heading");heading.append(titleBlock("Invoices","Create, send and track billing across the whole workspace."));if(context.isStaff){const actions=el("div","ap-invoice-global-actions");const upload=btn("Upload Invoice","ap-btn ap-btn--secondary ap-btn--sm");upload.addEventListener("click",()=>AppCore.ui.toast("Invoice upload is not enabled yet.","info"));const create=btn("Create Invoice","ap-btn ap-btn--primary ap-btn--sm");create.addEventListener("click",()=>openInvoiceCreateMenu(context));actions.append(upload,create);heading.append(actions);}root.append(heading);let filtered=invoices||[];const host=el("div");const apply=(q,controls)=>{const text=q.trim().toLowerCase(),status=controls.status?.value||"",client=controls.client?.value||"";filtered=(invoices||[]).filter(inv=>(!text||`${inv.invoice_number} ${clientMap.get(inv.client_id)||""}`.toLowerCase().includes(text))&&(!status||inv.status===status)&&(!client||inv.client_id===client));renderInvoiceRows(host,filtered,clientMap);};const extra=[{key:"status",options:[["","Status"],["draft","Draft"],["sent","Sent"],["overdue","Overdue"],["paid","Paid"],["void","Void"]]}];if(context.isStaff)extra.push({key:"client",options:[["","Client"],...(clients||[]).map(c=>[c.id,c.name])]});const {bar,search,controls}=buildFilterBar({placeholder:"Search invoices…",extra,onInput:apply});root.append(bar,host);container.append(root);apply(search.value,controls);}catch(error){AppCore.ui.renderError(container,error,()=>renderInvoicesHub(container,context));}}
 function renderInvoiceRows(host,invoices,clientMap){host.replaceChildren();if(!invoices.length){const empty=el("div","ap-centered-empty");empty.append(icon("invoice"),el("h3","","No invoices yet"),el("p","","Create an invoice when a project is ready to bill."));host.append(empty);return;}const table=el("div","ap-library-table ap-invoice-hub-table");const head=el("div","ap-library-table__row ap-library-table__row--head");["Invoice","Client","Status","Amount","Due",""] .forEach(x=>head.append(el("span","",x)));table.append(head);for(const inv of invoices){const row=el("div","ap-library-table__row");row.append(el("strong","",inv.invoice_number),el("span","ap-library-muted",clientMap.get(inv.client_id)||"Client"),el("span",`ap-badge ap-badge--${inv.status==="paid"?"success":inv.status==="overdue"?"danger":inv.status==="sent"?"info":"neutral"}`,inv.status),el("span","",AppCore.utils.formatMoney(inv.total_cents,inv.currency)),el("span","ap-library-muted",safeDate(inv.due_date)));const open=btn("›","ap-icon-button");open.addEventListener("click",async()=>{if(inv.folder_id){await selectFolder(inv.folder_id,{skipOverview:true});await selectModule("invoices");}});row.append(open);table.append(row);}host.append(table);}
 function openInvoiceCreateMenu(context){const wrap=el("div","ap-create-menu");const one=btn("","ap-create-menu__item");one.append(icon("invoice"),el("div","","One-time Invoice"));one.addEventListener("click",()=>{AppCore.ui.closeModal();chooseFolder("Choose a project",async(folderId)=>{await selectFolder(folderId,{skipOverview:true});await selectModule("invoices");document.dispatchEvent(new CustomEvent("invoice:create-requested"));});});const recurring=btn("","ap-create-menu__item");recurring.append(icon("repeat"),el("div","","Recurring Invoice"));recurring.addEventListener("click",()=>AppCore.ui.toast("Recurring invoices are planned for the next version.","info"));wrap.append(one,recurring);AppCore.ui.openModal({title:"Create Invoice",content:wrap,actions:[]});}
 
-export async function renderInbox(panel,context,initialTab="chats"){panel.replaceChildren();const isPage=panel.id==="module-content";panel.classList.toggle("ap-inbox-page",isPage);if(!isPage)panel.classList.add("ap-inbox-panel--open");const shell=el("section","ap-inbox-shell");const head=el("div","ap-inbox-head");head.append(el("h2","","Inbox"));const close=btn("×","ap-icon-button");close.setAttribute("aria-label","Close Inbox");close.addEventListener("click",()=>{if(isPage)document.dispatchEvent(new CustomEvent("inbox:close"));else panel.classList.remove("ap-inbox-panel--open")});head.append(close);shell.append(head);const tabs=el("div","ap-inbox-tabs");const body=el("div","ap-inbox-body");const labels=[["chats","Chats"],["tasks","Tasks"],["files","Files"],["updates","Updates"]];for(const [key,label] of labels){const b=btn(label,"ap-inbox-tab");if(key===initialTab)b.classList.add("ap-inbox-tab--active");b.addEventListener("click",async()=>{tabs.querySelectorAll("button").forEach(x=>x.classList.remove("ap-inbox-tab--active"));b.classList.add("ap-inbox-tab--active");await renderInboxTab(body,context,key);});tabs.append(b);}shell.append(tabs,body);panel.append(shell);await renderInboxTab(body,context,initialTab);}
-async function renderInboxTab(host,context,tab){AppCore.ui.renderLoading(host,"Loading…");try{let rows=[];if(tab==="chats"){const {data,error}=await supabase.from("conversations").select("*").eq("agency_id",context.agencyId).is("archived_at",null).is("trashed_at",null).order("last_message_at",{ascending:false,nullsFirst:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.title,sub:"Conversation",date:r.last_message_at||r.created_at,onClick:()=>navigateItem({type:"conversation",folder_id:r.folder_id})}));}else if(tab==="tasks"){const {data,error}=await supabase.from("tasks").select("*").eq("agency_id",context.agencyId).order("updated_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.title,sub:r.completed_at?"Completed task":"Task updated",date:r.updated_at,onClick:()=>navigateItem({type:"task",folder_id:r.folder_id})}));}else if(tab==="files"){const {data,error}=await supabase.from("files").select("*").eq("agency_id",context.agencyId).order("created_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.original_name,sub:"File added",date:r.created_at,onClick:()=>navigateItem({type:"file",folder_id:r.folder_id})}));}else{const {data,error}=await supabase.from("activity_logs").select("*").eq("agency_id",context.agencyId).order("created_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.action.replaceAll("."," · "),sub:r.entity_type||"Workspace update",date:r.created_at,onClick:null}));}host.replaceChildren();if(!rows.length){const empty=el("div","ap-inbox-empty");empty.append(icon(tab==="chats"?"chat":tab==="tasks"?"task":tab==="files"?"file":"bell"),el("h3","",tab==="chats"?"No new chats":tab==="tasks"?"No task activity":tab==="files"?"No file activity":"No updates yet"),el("p","","New activity will show up here."));host.append(empty);return;}for(const row of rows){const item=btn("","ap-inbox-item");const text=el("div");text.append(el("strong","",row.title),el("span","",row.sub),el("small","",AppCore.utils.formatDate(row.date,"relative")));item.append(text);if(row.onClick)item.addEventListener("click",()=>{document.getElementById("inbox-panel")?.classList.remove("ap-inbox-panel--open");row.onClick();});host.append(item);}}catch(error){AppCore.ui.renderError(host,error,()=>renderInboxTab(host,context,tab));}}
+export async function renderInbox(panel,context,initialTab="chats"){
+  panel.replaceChildren();
+  const isPage=panel.id==="module-content"||panel.dataset.page==="true";
+  panel.classList.toggle("ap-inbox-page",isPage);
+  if(!isPage)panel.classList.add("ap-inbox-panel--open");
+  const shell=el("section","ap-inbox-shell");
+  const head=el("div","ap-inbox-head");head.append(el("h2","","Inbox"));
+  const tools=el("div","k-inbox-tools");tools.append(btn("▽","k-inbox-tool"),btn("•••","k-inbox-tool"));head.append(tools);shell.append(head);
+  const tabs=el("div","ap-inbox-tabs");const body=el("div","ap-inbox-body");
+  const labels=[["chats","Chats"],["tasks","Tasks"],["files","Files"],["updates","Updates"]];
+  for(const [key,label] of labels){const b=btn(label,"ap-inbox-tab");if(key===initialTab)b.classList.add("ap-inbox-tab--active");b.addEventListener("click",async()=>{tabs.querySelectorAll("button").forEach(x=>x.classList.remove("ap-inbox-tab--active"));b.classList.add("ap-inbox-tab--active");await renderInboxTab(body,context,key);});tabs.append(b);}shell.append(tabs,body);panel.append(shell);await renderInboxTab(body,context,initialTab);
+}
+async function renderInboxTab(host,context,tab){AppCore.ui.renderLoading(host,"Loading…");try{let rows=[];if(tab==="chats"){const {data,error}=await supabase.from("conversations").select("*").eq("agency_id",context.agencyId).is("archived_at",null).is("trashed_at",null).order("last_message_at",{ascending:false,nullsFirst:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.title,sub:"Conversation",date:r.last_message_at||r.created_at,onClick:()=>navigateItem({type:"conversation",folder_id:r.folder_id})}));}else if(tab==="tasks"){const {data,error}=await supabase.from("tasks").select("*").eq("agency_id",context.agencyId).order("updated_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.title,sub:r.completed_at?"Completed task":"Task updated",date:r.updated_at,onClick:()=>navigateItem({type:"task",folder_id:r.folder_id})}));}else if(tab==="files"){const {data,error}=await supabase.from("files").select("*").eq("agency_id",context.agencyId).order("created_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.original_name,sub:"File added",date:r.created_at,onClick:()=>navigateItem({type:"file",folder_id:r.folder_id})}));}else{const {data,error}=await supabase.from("activity_logs").select("*").eq("agency_id",context.agencyId).order("created_at",{ascending:false}).limit(30);if(error)throw error;rows=(data||[]).map(r=>({title:r.action.replaceAll("."," · "),sub:r.entity_type||"Workspace update",date:r.created_at,onClick:null}));}host.replaceChildren();if(!rows.length){const empty=el("div","ap-inbox-empty");empty.append(icon(tab==="chats"?"chat":tab==="tasks"?"task":tab==="files"?"file":"bell"),el("h3","",tab==="chats"?"All quiet in chats.":tab==="tasks"?"No task activity":tab==="files"?"No file activity":"No updates yet"),el("p","",tab==="chats"?"When someone sends you a message, you’ll see it here.":"New activity will show up here."));host.append(empty);return;}for(const row of rows){const item=btn("","ap-inbox-item");const text=el("div");text.append(el("strong","",row.title),el("span","",row.sub),el("small","",AppCore.utils.formatDate(row.date,"relative")));item.append(text);if(row.onClick)item.addEventListener("click",()=>{document.getElementById("inbox-panel")?.classList.remove("ap-inbox-panel--open");row.onClick();});host.append(item);}}catch(error){AppCore.ui.renderError(host,error,()=>renderInboxTab(host,context,tab));}}
 
 const BUILTIN_TEMPLATES=[
   {name:"Client Workspace",description:"A clean structure for a new client.",folders:["Kickoff","Briefs","Deliverables","Feedback"]},

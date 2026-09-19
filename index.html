@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Agency Portal</title>
+  <title>Workspace</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/layout.css">
@@ -15,13 +15,36 @@
 <body>
 <div id="app" class="ap-app ap-app--workspace">
   <aside id="global-rail" class="ap-global-rail" aria-label="Global navigation">
-    <button class="ap-rail-brand" data-global-view="home" aria-label="Home">CO</button>
-    <nav class="ap-rail-nav">
-      <button class="ap-rail-item ap-rail-item--active" data-global-view="home" aria-label="Home"><span class="ap-rail-icon">⌂</span><span>Home</span></button>
-      <button class="ap-rail-item" data-global-view="inbox" aria-label="Inbox"><span class="ap-rail-icon">▣</span><span>Inbox</span></button>
-      <button class="ap-rail-item" data-global-view="tasks" aria-label="Tasks"><span class="ap-rail-icon">☷</span><span>Tasks</span></button>
-      <button class="ap-rail-item" data-global-view="invoices" aria-label="Invoices"><span class="ap-rail-icon">▤</span><span>Invoices</span></button>
-      <button class="ap-rail-item" data-global-view="more" aria-label="More"><span class="ap-rail-icon">•••</span><span>More</span></button>
+    <button class="ap-rail-brand" data-global-view="home" aria-label="Home" title="Home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9.5 12.2a5.7 5.7 0 0 1 10.6-3.5 5 5 0 0 1 7.4 4.4 5 5 0 0 1-3.1 4.7V24H7.6v-6.2a5.1 5.1 0 0 1 1.9-9.7Z"/><path d="M10.2 24h13.6v3.2H10.2z"/></svg>
+    </button>
+    <nav class="ap-rail-nav ap-rail-nav--main">
+      <button class="ap-rail-item ap-rail-item--active" data-global-view="home" aria-label="Home">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><path d="m4 10 8-6 8 6v9a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1z"/></svg></span><span>Home</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="inbox" aria-label="Inbox">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 14h4l2 2h4l2-2h4"/></svg></span><span>Inbox</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="proposals" aria-label="Proposals">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v14H7z"/><path d="M4 7h3v14h10v-4"/><path d="M10 7h4M10 11h5"/></svg></span><span>Proposals</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="clients" aria-label="Clients">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.3-3.2 2.4-5 5.5-5s5.2 1.8 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.5c3.1-.4 5.1 1.2 5.5 4.5"/></svg></span><span>Clients</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="tasks" aria-label="Tasks">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="6" rx="1"/><rect x="5" y="14" width="14" height="6" rx="1"/></svg></span><span>Tasks</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="more" aria-label="More">
+        <span class="ap-rail-icon ap-rail-icon--dots"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></span><span>More</span>
+      </button>
+    </nav>
+    <nav class="ap-rail-nav ap-rail-nav--bottom">
+      <button class="ap-rail-item ap-rail-item--compact" data-global-view="library-everything" aria-label="Library">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5z"/><path d="M9 5v14"/></svg></span><span class="ap-visually-hidden">Library</span>
+      </button>
+      <button class="ap-rail-item" data-global-view="settings" aria-label="Settings">
+        <span class="ap-rail-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7.5 7.5 0 0 0-.1-1l2-1.5-2-3.4-2.4 1A8 8 0 0 0 14.8 6l-.3-2.5h-4L10.2 6a8 8 0 0 0-1.7 1.1l-2.4-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2l-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1.1l.3 2.5h4l.3-2.5a8 8 0 0 0 1.7-1.1l2.4 1 2-3.4-2-1.5a7.5 7.5 0 0 0 .1-1Z"/></svg></span><span>Settings</span>
+      </button>
     </nav>
   </aside>
 
@@ -30,56 +53,40 @@
       <button id="sidebar-toggle" class="ap-icon-button ap-mobile-menu" aria-label="Open navigation">☰</button>
       <div class="ap-header-spacer"></div>
       <div id="global-search" class="ap-search">
-        <span class="ap-search__icon" aria-hidden="true">⌕</span>
-        <input type="search" placeholder="Search workspace…" aria-label="Search workspace">
+        <span class="ap-search__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/></svg>
+        </span>
+        <input type="search" placeholder="Search workspace..." aria-label="Search workspace">
         <div id="global-search-results"></div>
       </div>
       <div id="user-menu" class="ap-user-menu"></div>
     </header>
 
     <div class="ap-body">
-      <aside id="workspace-sidebar" class="ap-sidebar">
+      <!-- Kept for the existing folder/module engine. The Kitchen-style desktop shell hides it. -->
+      <aside id="workspace-sidebar" class="ap-sidebar" aria-hidden="true">
         <div id="agency-identity" class="ap-agency-identity"></div>
         <nav class="ap-workspace-nav" aria-label="Workspace navigation">
-          <button class="ap-workspace-link ap-workspace-link--active" data-workspace-view="home"><span>⌂</span><span>Home</span></button>
+          <button class="ap-workspace-link" data-workspace-view="home"><span>⌂</span><span>Home</span></button>
           <button class="ap-workspace-link" data-workspace-view="my-tasks"><span>✓</span><span>My Tasks</span></button>
           <button class="ap-workspace-link ap-library-toggle" aria-expanded="true"><span>▰</span><span>Library</span><span class="ap-workspace-link__chev">⌄</span></button>
           <div class="ap-library-nav">
-            <button data-library-view="everything">Everything</button>
-            <button data-library-view="boards">Boards</button>
-            <button data-library-view="conversations">Conversations</button>
-            <button data-library-view="docs">Documents</button>
-            <button data-library-view="embeds">Embeds</button>
-            <button data-library-view="files">Files</button>
-            <button data-library-view="archive">Archive</button>
-            <button data-library-view="trash">Trash</button>
+            <button data-library-view="everything">Everything</button><button data-library-view="boards">Boards</button><button data-library-view="conversations">Conversations</button><button data-library-view="docs">Documents</button><button data-library-view="embeds">Embeds</button><button data-library-view="files">Files</button><button data-library-view="archive">Archive</button><button data-library-view="trash">Trash</button>
           </div>
         </nav>
-
-        <div class="ap-sidebar-section-head">
-          <span>Folders</span>
-          <button id="new-folder" class="ap-icon-button" aria-label="New folder">+</button>
-        </div>
+        <div class="ap-sidebar-section-head"><span>Folders</span><button id="new-folder" class="ap-icon-button" aria-label="New folder">+</button></div>
         <nav id="folder-tree" aria-label="Folders"></nav>
         <div id="sidebar-admin" class="ap-sidebar-admin"></div>
       </aside>
 
       <div id="sidebar-backdrop" class="ap-sidebar-backdrop"></div>
-
       <main class="ap-main">
         <section id="page-header" class="ap-page-header" hidden>
-          <div class="ap-page-header__title">
-            <button id="back-to-folder" class="ap-icon-button" aria-label="Back to folder">←</button>
-            <div><nav id="breadcrumb" class="ap-breadcrumb" aria-label="Breadcrumb"></nav><h1>Workspace</h1></div>
-          </div>
+          <div class="ap-page-header__title"><button id="back-to-folder" class="ap-icon-button" aria-label="Back to folder">←</button><div><nav id="breadcrumb" class="ap-breadcrumb" aria-label="Breadcrumb"></nav><h1>Workspace</h1></div></div>
           <div id="folder-actions"></div>
         </section>
         <div id="module-tabs" class="ap-tabs" role="tablist" hidden>
-          <button class="ap-tab" data-module="conversation" role="tab">Conversation</button>
-          <button class="ap-tab" data-module="boards" role="tab">Board</button>
-          <button class="ap-tab" data-module="docs" role="tab">Docs</button>
-          <button class="ap-tab" data-module="files" role="tab">Files</button>
-          <button class="ap-tab" data-module="invoices" role="tab">Invoices</button>
+          <button class="ap-tab" data-module="conversation" role="tab">Conversation</button><button class="ap-tab" data-module="boards" role="tab">Board</button><button class="ap-tab" data-module="docs" role="tab">Docs</button><button class="ap-tab" data-module="files" role="tab">Files</button><button class="ap-tab" data-module="invoices" role="tab">Invoices</button>
         </div>
         <section id="module-content" class="ap-module-content"></section>
       </main>

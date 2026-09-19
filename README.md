@@ -271,3 +271,17 @@ The implementation deliberately does **not** copy any third-party logo, propriet
 ### Fresh setup reminder
 
 For a fresh Supabase project, do not stop after `0001_shared_schema.sql`. Run all four migrations listed in section 2. If you already ran the earlier schema and the manual consolidated SQL repair patch, you can still run `0300_portal_experience.sql` afterward.
+
+## Kitchen-style interface update
+
+The team workspace UI has been rebuilt to closely match the supplied Kitchen.co screenshots while keeping this project's existing Supabase data model and functionality. The update includes:
+
+- Kitchen-style global navigation rail, search bar, profile menu, rounded workspace panels, spacing and typography
+- Home dashboard with recent folders, recent items and six quick-create cards
+- Split Inbox layout with workspace preview on the right
+- Clients table and create-client flow
+- Tasks table and calendar views
+- Settings shell and pages for Home, Branding, Proposals, Invoices, Quotes, Tasks, Forms, Zapier, Pabbly Connect, Members, Permissions, Teams and Billing
+- Existing folder, board, conversation, document, file, invoice, authentication and Supabase features remain connected to the original project
+
+The implementation recreates the visual layout from the provided references; it does not include or copy Kitchen.co's proprietary source code or backend.
