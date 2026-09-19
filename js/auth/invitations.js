@@ -1,27 +1,11 @@
 import { supabase } from "../supabaseClient.js";
 import { getState } from "../core/state.js";
+import { APP_CONFIG } from "../config.js";
 
 export async function acceptInvitation(token){const {data,error}=await supabase.rpc("accept_invitation",{p_token:token});if(error)throw error;return data?.[0]||null;}
 
-async function invocationMessage(error, result) {
-  if (typeof result?.error === "string" && result.error.trim()) return result.error.trim();
-  const response = error?.context;
-  if (response && typeof response.clone === "function") {
-    try {
-      const body = await response.clone().json();
-      if (typeof body?.error === "string" && body.error.trim()) return body.error.trim();
-    } catch {
-      // The function may have returned a non-JSON gateway error.
-    }
-    try {
-      const text = (await response.clone().text()).trim();
-      if (text && !/^<(!doctype|html)/i.test(text)) return text.slice(0, 240);
-    } catch {
-      // Fall through to the SDK error below.
-    }
-  }
-  return String(error?.message || "").trim();
-}
+function invitationLink(token){const url=new URL("login.html",window.location.href);url.searchParams.set("invite",token);return url.toString();}
+async function sendInvitationEmail({toEmail,link}){let response;try{response=await fetch("https://api.emailjs.com/api/v1.0/email/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({service_id:APP_CONFIG.EMAILJS_SERVICE_ID,template_id:APP_CONFIG.EMAILJS_TEMPLATE_ID,user_id:APP_CONFIG.EMAILJS_PUBLIC_KEY,template_params:{to_email:toEmail,invite_link:link}})});}catch{throw new Error("Could not reach EmailJS. Check your internet connection and try again.");}if(!response.ok){const detail=(await response.text()).trim();throw new Error(detail||"EmailJS rejected the invitation email.");}}
 
 export async function inviteMember({email,role="team",clientId=null}){
   const s=getState();
@@ -33,16 +17,15 @@ export async function inviteMember({email,role="team",clientId=null}){
   const payload={agency_id:s.agency.id,email:normalizedEmail,intended_role:role,client_id:role==="client"?clientId:null,invited_by:s.user.id};
   const {data,error}=await supabase.from("invitations").insert(payload).select().single();
   if(error)throw error;
-  const {data:emailResult,error:emailError}=await supabase.functions.invoke("send-invitation-email",{body:{invitation_id:data.id}});
-  if(emailError||emailResult?.error||!emailResult?.email_sent||!emailResult?.link){
+  const link=invitationLink(data.token);
+  try{await sendInvitationEmail({toEmail:normalizedEmail,link});}catch(emailError){
     const {error:revokeError}=await supabase.from("invitations").update({status:"revoked"}).eq("id",data.id).eq("status","pending");
     if(revokeError)console.error("Failed to revoke an undelivered invitation",revokeError);
-    const functionMessage=await invocationMessage(emailError,emailResult);
-    const failure=new Error(functionMessage||"The invitation email could not be sent. Check the function logs and email settings.");
+    const failure=new Error(emailError?.message||"The invitation email could not be sent. Check your EmailJS settings.");
     failure.userMessage=true;
     throw failure;
   }
-  return {...data,link:emailResult.link,emailSent:true};
+  return {...data,link,emailSent:true};
 }
 export async function listInvitations(){const agencyId=getState().agency?.id;if(!agencyId)return[];const {data,error}=await supabase.from("invitations").select("*").eq("agency_id",agencyId).order("created_at",{ascending:false});if(error)throw error;return data||[];}
 export async function revokeInvitation(id){const {error}=await supabase.from("invitations").update({status:"revoked"}).eq("id",id);if(error)throw error;}

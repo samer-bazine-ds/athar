@@ -108,16 +108,7 @@ Owner → Team → Invite team member. The app sends the invitation email and al
 
 Clients → create a client company → Invite contact. The app sends the invitation email and also shows a backup link.
 
-Deploy the email function and configure Resend before sending invitations:
-
-```bash
-supabase functions deploy send-invitation-email
-supabase secrets set RESEND_API_KEY=re_xxx
-supabase secrets set INVITATION_FROM_EMAIL="Athar <invites@yourdomain.com>"
-supabase secrets set APP_BASE_URL=https://your-site.example
-```
-
-The sender domain must be verified in Resend. The authenticated invitee must use the same email address as the invitation. Membership role comes only from the stored invitation row.
+Invitations are delivered through EmailJS using the service, template, and public key in `js/config.js`. The authenticated invitee must use the same email address as the invitation. Membership role comes only from the stored invitation row.
 
 ## 7. Folder sharing
 
@@ -303,11 +294,4 @@ The implementation recreates the visual layout from the provided references; it 
 
 ### Invitation email delivery
 
-Client and team invitations are sent by the `send-invitation-email` Supabase Edge Function. Deploy it and configure the required secrets before inviting users:
-
-```sh
-supabase functions deploy send-invitation-email
-supabase secrets set RESEND_API_KEY=re_xxx INVITATION_FROM_EMAIL="Athar <invites@example.com>" APP_BASE_URL=https://your-site.example
-```
-
-The `INVITATION_FROM_EMAIL` value must use a verified sender/domain in Resend. If the function or secrets are not configured, the invitation is revoked and the UI shows the delivery error instead of presenting a link that was never emailed.
+Client and team invitations are sent with EmailJS through the connected Gmail service. EmailJS must have an invitation template containing `{{to_email}}` and `{{invite_link}}`. If delivery fails, the invitation is revoked and the UI displays the EmailJS error.

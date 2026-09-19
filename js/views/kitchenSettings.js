@@ -2,7 +2,7 @@ import { supabase } from "../supabaseClient.js";
 import { getState } from "../core/state.js";
 import { AppCore } from "../core/appCore.js";
 import { saveBranding } from "../workspace/branding.js";
-import { openTeamInvite } from "../workspace/members.js";
+import { openTeamInvite } from "../workspace/members.js?v=emailjs-1";
 
 const NAV = [
   ["Home", "home"],
