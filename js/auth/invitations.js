@@ -2,7 +2,7 @@ import { supabase } from "../supabaseClient.js";
 import { getState } from "../core/state.js";
 import { APP_CONFIG } from "../config.js";
 
-export async function acceptInvitation(token){const {data,error}=await supabase.rpc("accept_invitation",{p_token:token});if(error)throw error;return data?.[0]||null;}
+export async function acceptInvitation(token){const {data,error}=await supabase.rpc("accept_invitation",{p_token:token});if(error){if(error.code==="P0001"&&error.message)throw Object.assign(new Error(error.message),{userMessage:true});throw error;}return data?.[0]||null;}
 
 function invitationLink(token){const url=new URL("login.html",window.location.href);url.searchParams.set("invite",token);return url.toString();}
 async function sendInvitationEmail({toEmail,link}){let response;try{response=await fetch("https://api.emailjs.com/api/v1.0/email/send",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({service_id:APP_CONFIG.EMAILJS_SERVICE_ID,template_id:APP_CONFIG.EMAILJS_TEMPLATE_ID,user_id:APP_CONFIG.EMAILJS_PUBLIC_KEY,template_params:{to_email:toEmail,invite_link:link}})});}catch{throw new Error("Could not reach EmailJS. Check your internet connection and try again.");}if(!response.ok){const detail=(await response.text()).trim();throw new Error(detail||"EmailJS rejected the invitation email.");}}

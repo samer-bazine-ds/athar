@@ -1,7 +1,7 @@
 import { restoreAuth, signIn, signUp, requestPasswordReset, updatePassword, loadIdentity } from "./auth/auth.js";
 import { getState } from "./core/state.js";
 import { completeProfile, createAgency } from "./auth/onboarding.js";
-import { acceptInvitation } from "./auth/invitations.js";
+import { acceptInvitation } from "./auth/invitations.js?v=accept-invite-1";
 import { AppCore } from "./core/appCore.js";
 
 const root=document.getElementById("auth-root");
