@@ -49,7 +49,13 @@ function openClientActions(client,done){
   const invite=button("Invite contact","ap-btn ap-btn--secondary");invite.addEventListener("click",()=>{AppCore.ui.closeModal();openInvite(client);});
   const edit=button("Edit client","ap-btn ap-btn--secondary");edit.addEventListener("click",()=>{AppCore.ui.closeModal();openClientForm(client,done);});
   const archive=button("Archive","ap-btn ap-btn--danger");archive.addEventListener("click",async()=>{if(!await AppCore.ui.confirm({title:"Archive client?",message:"Client portal access will stop immediately.",confirmLabel:"Archive",danger:true}))return;try{const {error}=await supabase.from("clients").update({archived_at:new Date().toISOString()}).eq("id",client.id);if(error)throw error;AppCore.ui.closeModal();done?.();}catch(err){AppCore.ui.toast(AppCore.ui.describeError(err),"error");}});
-  wrap.append(invite,edit,archive);AppCore.ui.openModal({title:client.name,content:wrap,actions:[]});
+  wrap.append(invite,edit,archive);
+  if(getState().role==="owner"){
+    const remove=button("Delete permanently","ap-btn ap-btn--danger");
+    remove.addEventListener("click",async()=>{if(!await AppCore.ui.confirm({title:"Delete client permanently?",message:"This permanently removes the client, their invitations, portal access, folder permissions, and invoices. This cannot be undone.",confirmLabel:"Delete permanently",danger:true}))return;remove.disabled=true;try{const {data,error}=await supabase.from("clients").delete().eq("id",client.id).select("id").maybeSingle();if(error)throw error;if(!data)throw new Error("Only the workspace owner can permanently delete a client.");AppCore.ui.closeModal();AppCore.ui.toast("Client permanently deleted.","success");done?.();}catch(err){remove.disabled=false;AppCore.ui.toast(AppCore.ui.describeError(err),"error");}});
+    wrap.append(remove);
+  }
+  AppCore.ui.openModal({title:client.name,content:wrap,actions:[]});
 }
 
 function openClientForm(client,done){const form=el("form","ap-stack");const name=input("Client name"),email=input("Email","email",false),notes=el("textarea","ap-textarea");notes.placeholder="Notes";name.value=client?.name||"";email.value=client?.contact_email||"";notes.value=client?.notes||"";const save=button(client?"Save":"Create Client","ap-btn ap-btn--primary");save.type="submit";form.append(name,email,notes,save);form.addEventListener("submit",async e=>{e.preventDefault();save.disabled=true;try{if(client){const {error}=await supabase.from("clients").update({name:name.value.trim(),contact_email:email.value||null,notes:notes.value||null}).eq("id",client.id);if(error)throw error;}else await createClientCompany({name:name.value,email:email.value,notes:notes.value});AppCore.ui.closeModal();done?.();}catch(err){AppCore.ui.toast(AppCore.ui.describeError(err),"error");}finally{save.disabled=false;}});AppCore.ui.openModal({title:client?"Edit Client":"Create Client",content:form,actions:[]});name.focus();}
