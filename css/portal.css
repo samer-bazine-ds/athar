@@ -9,6 +9,9 @@
   --portal-folder:#f4b400;
 }
 body{background:var(--color-surface);overflow:hidden}
+.ap-skip-link{position:fixed;left:.75rem;top:.75rem;z-index:200;padding:.5rem .75rem;border-radius:.35rem;background:#202020;color:#fff;transform:translateY(-180%);transition:transform .15s ease}.ap-skip-link:focus{transform:none}
+.ap-loading-shell{min-height:14rem;display:grid;place-content:center;justify-items:center;gap:.75rem;color:#888;font-size:.78rem}
+.ap-noscript{position:fixed;inset:0;z-index:500;display:grid;place-items:center;margin:0;padding:1rem;background:#fff;color:#333;text-align:center}
 .ap-app--workspace{display:grid;grid-template-columns:var(--portal-rail-width) minmax(0,1fr);height:100vh;min-height:0;background:var(--color-surface)}
 .ap-global-rail{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;border-right:1px solid var(--portal-line);background:#fbfbfb;min-height:100vh;padding:.75rem .35rem;z-index:30}
 .ap-rail-brand{border:0;background:transparent;font-weight:800;font-size:1rem;color:#e43c2f;letter-spacing:-.08em;margin:.2rem 0 1rem;cursor:pointer}

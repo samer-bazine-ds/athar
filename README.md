@@ -101,19 +101,22 @@ http://localhost:8080/login.html
 
 ### Team
 
-Owner → Team → Invite team member → copy the generated invite URL.
+Owner → Team → Invite team member. The app sends the invitation email and also shows a backup link.
 
 ### Client
 
-Clients → create a client company → Invite contact → copy the generated invite URL.
+Clients → create a client company → Invite contact. The app sends the invitation email and also shows a backup link.
 
-Invitation email delivery is intentionally P1. V1 provides a secure copyable link:
+Deploy the email function and configure Resend before sending invitations:
 
-```text
-https://your-origin/login.html?invite=<token>
+```bash
+supabase functions deploy send-invitation-email
+supabase secrets set RESEND_API_KEY=re_xxx
+supabase secrets set INVITATION_FROM_EMAIL="Athar <invites@yourdomain.com>"
+supabase secrets set APP_BASE_URL=https://your-site.example
 ```
 
-The authenticated invitee must use the same email address as the invitation. Membership role comes only from the stored invitation row.
+The sender domain must be verified in Resend. The authenticated invitee must use the same email address as the invitation. Membership role comes only from the stored invitation row.
 
 ## 7. Folder sharing
 
@@ -202,6 +205,7 @@ supabase/
   policies/README.md
   functions/
     create-checkout-session/index.ts
+    send-invitation-email/index.ts
     stripe-webhook/index.ts
 ```
 
@@ -285,3 +289,14 @@ The team workspace UI has been rebuilt to closely match the supplied Kitchen.co 
 - Existing folder, board, conversation, document, file, invoice, authentication and Supabase features remain connected to the original project
 
 The implementation recreates the visual layout from the provided references; it does not include or copy Kitchen.co's proprietary source code or backend.
+
+### Invitation email delivery
+
+Client and team invitations are sent by the `send-invitation-email` Supabase Edge Function. Deploy it and configure the required secrets before inviting users:
+
+```sh
+supabase functions deploy send-invitation-email
+supabase secrets set RESEND_API_KEY=re_xxx INVITATION_FROM_EMAIL="Athar <invites@example.com>" APP_BASE_URL=https://your-site.example
+```
+
+The `INVITATION_FROM_EMAIL` value must use a verified sender/domain in Resend. If the function or secrets are not configured, the invitation is revoked and the UI shows the delivery error instead of presenting a link that was never emailed.

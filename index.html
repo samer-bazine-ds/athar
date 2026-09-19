@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Workspace</title>
+  <meta name="theme-color" content="#f7f7f7">
+  <meta name="description" content="Athar team workspace dashboard">
+  <title>Athar | Workspace</title>
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/reset.css">
   <link rel="stylesheet" href="css/layout.css">
@@ -13,6 +15,7 @@
   <link rel="stylesheet" href="css/portal.css">
 </head>
 <body>
+<a class="ap-skip-link" href="#module-content">Skip to workspace content</a>
 <div id="app" class="ap-app ap-app--workspace">
   <aside id="global-rail" class="ap-global-rail" aria-label="Global navigation">
     <button class="ap-rail-brand" data-global-view="home" aria-label="Home" title="Home">
@@ -80,7 +83,7 @@
       </aside>
 
       <div id="sidebar-backdrop" class="ap-sidebar-backdrop"></div>
-      <main class="ap-main">
+      <main id="main-content" class="ap-main">
         <section id="page-header" class="ap-page-header" hidden>
           <div class="ap-page-header__title"><button id="back-to-folder" class="ap-icon-button" aria-label="Back to folder">←</button><div><nav id="breadcrumb" class="ap-breadcrumb" aria-label="Breadcrumb"></nav><h1>Workspace</h1></div></div>
           <div id="folder-actions"></div>
@@ -88,7 +91,12 @@
         <div id="module-tabs" class="ap-tabs" role="tablist" hidden>
           <button class="ap-tab" data-module="conversation" role="tab">Conversation</button><button class="ap-tab" data-module="boards" role="tab">Board</button><button class="ap-tab" data-module="docs" role="tab">Docs</button><button class="ap-tab" data-module="files" role="tab">Files</button><button class="ap-tab" data-module="invoices" role="tab">Invoices</button>
         </div>
-        <section id="module-content" class="ap-module-content"></section>
+        <section id="module-content" class="ap-module-content" aria-live="polite" aria-busy="true">
+          <div class="ap-loading-shell" role="status">
+            <span class="ap-spinner" aria-hidden="true"></span>
+            <span>Loading your workspace…</span>
+          </div>
+        </section>
       </main>
     </div>
   </div>
@@ -98,6 +106,9 @@
 </div>
 <div id="toast-container" class="ap-toast-container"></div>
 <div id="modal-root"></div>
+<noscript>
+  <p class="ap-noscript">JavaScript is required to use the Athar workspace.</p>
+</noscript>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

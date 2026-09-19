@@ -110,6 +110,7 @@ async function showView(view, options = {}) {
   else if (view === "settings") await renderSettingsHub(content, context, options.settingsSection || "home");
   else if (view === "profile") renderProfileView(content, context, { onBack: () => showView("home"), onLogout: signOut });
   else if (view.startsWith("library-")) { currentLibraryView = view.slice(8); await renderLibrary(content, context, currentLibraryView); }
+  content.setAttribute("aria-busy", "false");
   if (!options.noHash) {
     if (view === "settings") history.replaceState(null, "", `#/settings/${options.settingsSection || "home"}`);
     else history.replaceState(null, "", `#/${view}`);
@@ -120,6 +121,7 @@ async function showFolderOverview(folderId) {
   currentView = "folder"; await unmountActiveModule(); setState({ selectedModule: null, selectedFolderId: null }); renderFolderTree(); hideFolderChrome(); markNavigation("folder"); renderFolderTree();
   const content = document.getElementById("module-content"); content.className = "ap-module-content";
   await renderFolderOverview(content, AppCore.getModuleContext(), folderId);
+  content.setAttribute("aria-busy", "false");
   history.replaceState(null, "", `#/folder/${folderId}`);
 }
 
