@@ -10,7 +10,11 @@ export async function inviteMember({email,role="team",clientId=null}){
   const {data:emailResult,error:emailError}=await supabase.functions.invoke("send-invitation-email",{body:{invitation_id:data.id}});
   if(emailError||!emailResult?.link){
     await supabase.from("invitations").update({status:"revoked"}).eq("id",data.id);
-    throw new Error(emailResult?.error||emailError?.message||"The invitation email could not be sent.");
+    let functionMessage=emailResult?.error||"";
+    if(!functionMessage&&emailError?.context){try{functionMessage=(await emailError.context.json())?.error||"";}catch{} }
+    const failure=new Error(functionMessage||emailError?.message||"The invitation email could not be sent.");
+    failure.userMessage=true;
+    throw failure;
   }
   return {...data,link:emailResult.link,emailSent:true};
 }

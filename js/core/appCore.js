@@ -1,6 +1,6 @@
 import { supabase } from "../supabaseClient.js";
 import { getState, subscribe } from "./state.js";
-import * as ui from "./ui.js";
+import * as ui from "./ui.js?v=invite-email-4";
 import * as utils from "./utils.js";
 import { selectFolder as selectFolderImpl } from "../workspace/folders.js";
 import { selectModule as selectModuleImpl } from "./moduleRegistry.js";

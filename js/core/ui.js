@@ -2,6 +2,7 @@ function root(id) { return document.getElementById(id); }
 function button(label, variant = "secondary") { const b=document.createElement("button"); b.type="button"; b.className=`ap-btn ap-btn--${variant}`; b.textContent=label; return b; }
 export function describeError(error) {
   const code = error?.code || error?.details || ""; const message = String(error?.message || error || "");
+  if (error?.userMessage && message) return message;
   if (code === "42501" || /row-level security|permission denied/i.test(message)) return "You don't have permission to do that.";
   if (code === "PGRST116") return "That item no longer exists.";
   if (code === "23505") return "That already exists.";
