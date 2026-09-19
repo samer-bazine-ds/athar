@@ -1,7 +1,7 @@
 import { supabase } from "../supabaseClient.js";
 import { getState } from "../core/state.js";
 import { AppCore } from "../core/appCore.js";
-import { inviteMember } from "../auth/invitations.js";
+import { inviteMember } from "../auth/invitations.js?v=invite-email-1";
 
 export async function listClients(){const s=getState();const {data,error}=await supabase.from("clients").select("*").eq("agency_id",s.agency.id).is("archived_at",null).order("created_at",{ascending:false});if(error)throw error;return data||[];}
 export async function createClientCompany({name,email,notes}){const s=getState();const {data,error}=await supabase.from("clients").insert({agency_id:s.agency.id,name:name.trim(),contact_email:email||null,notes:notes||null,created_by:s.user.id}).select().single();if(error)throw error;return data;}
