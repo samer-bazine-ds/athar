@@ -2,7 +2,7 @@ import { AppCore } from "../core/appCore.js";
 import { on, emit } from "../core/events.js";
 import { subscribeChannel, unsubscribeByPrefix } from "../core/realtime.js";
 import { listConversations, createConversation, updateConversation } from "../conversations/conversations.js";
-import { listMessages, sendMessage, deleteMessage } from "../conversations/messages.js";
+import { listMessages, sendMessage, deleteMessage, openMessageAttachment, validateMessageAttachment } from "../conversations/messages.js";
 
 const state = { container:null, context:null, conversations:[], activeId:null, messages:[], off:[], replyTo:null, timer:null };
 const el = (tag, cls, text) => {
@@ -170,7 +170,9 @@ function renderMessage(message) {
   const meta = el("div", "ap-message__meta k-message__meta");
   meta.append(el("strong", "", mine ? "You" : senderName), el("span", "", AppCore.utils.formatDate(message.created_at, "relative")));
   if (!message.client_visible && state.context.isStaff) meta.append(el("span", "k-message__internal-label", "Internal"));
-  const body = el("p", "ap-message__body", message.body);
+  const body = message.body ? el("p", "ap-message__body", message.body) : null;
+  const attachments = el("div", "k-message-attachments");
+  for (const attachment of message.attachments || []) attachments.append(renderAttachment(attachment));
   const actions = el("div", "ap-message__actions k-message__actions");
   const reply = el("button", "", "Reply");
   reply.type = "button";
@@ -182,7 +184,7 @@ function renderMessage(message) {
     remove.addEventListener("click", async () => {
       if (!await AppCore.ui.confirm({ title:"Delete message?", message:"This cannot be undone.", confirmLabel:"Delete", danger:true })) return;
       try {
-        await deleteMessage(message.id);
+        await deleteMessage(message);
         await loadMessages();
         render();
       } catch (error) {
@@ -191,9 +193,27 @@ function renderMessage(message) {
     });
     actions.append(remove);
   }
-  content.append(meta, body, actions);
+  content.append(meta);
+  if (body) content.append(body);
+  if (attachments.childElementCount) content.append(attachments);
+  content.append(actions);
   card.append(avatar, content);
   return card;
+}
+
+function renderAttachment(attachment) {
+  const file = el("button", `k-message-attachment${attachment.mime_type.startsWith("image/") ? " k-message-attachment--image" : attachment.mime_type.startsWith("video/") ? " k-message-attachment--video" : ""}`);
+  file.type = "button";
+  file.title = `Open ${attachment.original_name}`;
+  const icon = attachment.mime_type.startsWith("image/") ? "IMG" : attachment.mime_type.startsWith("video/") ? "VID" : attachment.mime_type === "application/pdf" ? "PDF" : "FILE";
+  const copy = el("span", "k-message-attachment__copy");
+  copy.append(el("strong", "", attachment.original_name), el("small", "", AppCore.utils.formatBytes(attachment.size_bytes)));
+  file.append(el("span", "k-message-attachment__icon", icon), copy, el("span", "k-message-attachment__open", "Open"));
+  file.addEventListener("click", async () => {
+    try { await openMessageAttachment(attachment); }
+    catch (error) { AppCore.ui.toast(AppCore.ui.describeError(error), "error"); }
+  });
+  return file;
 }
 
 function renderComposer(current) {
@@ -209,14 +229,45 @@ function renderComposer(current) {
   }
   const textarea = el("textarea", "ap-textarea");
   textarea.placeholder = "Write a message...";
-  textarea.required = true;
   textarea.maxLength = 20000;
   textarea.setAttribute("aria-label", "Write a message");
   textarea.addEventListener("keydown", event => {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") form.requestSubmit();
   });
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.multiple = true;
+  fileInput.accept = "image/*,video/*,audio/*,application/pdf,text/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip";
+  fileInput.hidden = true;
+  const attachedFiles = [];
+  const attachmentList = el("div", "k-composer-attachments");
+  const renderSelectedFiles = () => {
+    attachmentList.replaceChildren();
+    attachedFiles.forEach((file, index) => {
+      const chip = el("span", "k-composer-attachment", file.name);
+      const remove = el("button", "", "×");
+      remove.type = "button";
+      remove.title = `Remove ${file.name}`;
+      remove.addEventListener("click", () => { attachedFiles.splice(index, 1); renderSelectedFiles(); });
+      chip.append(remove);
+      attachmentList.append(chip);
+    });
+  };
+  fileInput.addEventListener("change", () => {
+    for (const file of Array.from(fileInput.files || [])) {
+      const problem = validateMessageAttachment(file);
+      if (problem) { AppCore.ui.toast(problem, "warning"); continue; }
+      if (!attachedFiles.some(existing => existing.name === file.name && existing.size === file.size && existing.lastModified === file.lastModified)) attachedFiles.push(file);
+    }
+    fileInput.value = "";
+    renderSelectedFiles();
+  });
   const bottom = el("div", "ap-message-composer__bottom k-message-composer__bottom");
   const details = el("div", "k-message-composer__details");
+  const attach = el("button", "k-message-attach", "Attach files");
+  attach.type = "button";
+  attach.addEventListener("click", () => fileInput.click());
+  details.append(attach);
   let visible = null;
   if (state.context.isStaff) {
     const label = el("label", "ap-checkbox-label k-message-visibility-control");
@@ -230,14 +281,16 @@ function renderComposer(current) {
   const send = el("button", "ap-btn ap-btn--primary k-message-send", "Send");
   send.type = "submit";
   bottom.append(details, send);
-  form.append(textarea, bottom);
+  form.append(textarea, fileInput, attachmentList, bottom);
   form.addEventListener("submit", async event => {
     event.preventDefault();
     const body = textarea.value.trim();
-    if (!body) return;
+    if (!body && !attachedFiles.length) return;
     send.disabled = true;
+    attach.disabled = true;
+    send.textContent = attachedFiles.length ? "Uploading..." : "Sending...";
     try {
-      await sendMessage({ conversationId:current.id, body, clientVisible:state.context.isClient ? true : (visible?.checked ?? true), replyToMessageId:state.replyTo });
+      await sendMessage({ conversationId:current.id, body, clientVisible:state.context.isClient ? true : (visible?.checked ?? true), replyToMessageId:state.replyTo, attachments:attachedFiles });
       state.replyTo = null;
       await loadMessages();
       render();
@@ -246,6 +299,8 @@ function renderComposer(current) {
       AppCore.ui.toast(AppCore.ui.describeError(error), "error");
     } finally {
       send.disabled = false;
+      attach.disabled = false;
+      send.textContent = "Send";
     }
   });
   return form;

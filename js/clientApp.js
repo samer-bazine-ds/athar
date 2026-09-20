@@ -4,7 +4,7 @@ import { emit } from "./core/events.js";
 import { activateAgency } from "./workspace/agencies.js";
 import { renderFolderTree } from "./workspace/folderTree.js";
 import { renderBreadcrumb, selectFolder } from "./workspace/folders.js";
-import { selectModule, unmountActiveModule } from "./core/moduleRegistry.js?v=conversation-ui-4";
+import { selectModule, unmountActiveModule } from "./core/moduleRegistry.js?v=conversation-attachments-1";
 import { mountGlobalSearch } from "./modules/search.js";
 import { AppCore } from "./core/appCore.js";
 import { renderHome, renderTasksHub, renderInvoicesHub, renderLibrary, renderInbox, renderFolderOverview, renderProfileView } from "./views/portalViews.js";
