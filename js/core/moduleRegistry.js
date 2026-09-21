@@ -3,7 +3,7 @@ import { emit } from "./events.js";
 import { AppCore } from "./appCore.js";
 
 const MODULE_LOADERS = {
-  conversation:()=>import("../modules/conversation.js?v=conversation-attachments-1"),
+  conversation:()=>import("../modules/conversation.js?v=conversation-ui-4"),
   boards:()=>import("../modules/boards.js"),
   docs:()=>import("../modules/docs.js"),
   files:()=>import("../modules/files.js"),
